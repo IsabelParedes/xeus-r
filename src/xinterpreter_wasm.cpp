@@ -6,6 +6,8 @@
 * The full license is in the file LICENSE, distributed with this software. 
 ****************************************************************************/
 
+#include <iostream>
+
 #include "xeus/xinterpreter.hpp"
 #include "xeus/xsystem.hpp"
 
@@ -18,5 +20,6 @@ namespace xeus_r
     wasm_interpreter::wasm_interpreter()
         : interpreter(0, nullptr)
     {
+        std::cout << "[xeus-r] R wasm interpreter" << std::endl; // REMOVE
     }
 }

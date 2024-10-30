@@ -204,6 +204,8 @@ macro(xeus_r_create_target target_name linkage output_name)
 
     target_compile_features(${target_name} PRIVATE cxx_std_17)
 
+    message(STATUS "🍅🍅🍅 XEUS_R_INCLUDE_DIR: ${XEUS_R_INCLUDE_DIR}")
+
     target_include_directories(${target_name}
                                PUBLIC
                                $<BUILD_INTERFACE:${XEUS_R_INCLUDE_DIR}>
@@ -274,10 +276,28 @@ if (XEUS_R_BUILD_EXECUTABLE)
 endif()
 
 if(EMSCRIPTEN)
-    include(WasmBuildOptions)
+    include(WasmBuildLocalOptions)
     find_package(xeus-lite REQUIRED)
-    add_executable(xr src/main_emscripten_kernel.cpp )
-    target_link_libraries(xr PRIVATE xeus-lite)
+    add_executable(xr src/main_emscripten_kernel.cpp)
+    target_link_libraries(xr PRIVATE xeus-lite
+        ${R_HOME}/library/grDevices/libs/grDevices.so
+        ${R_HOME}/library/graphics/libs/graphics.so
+        ${R_HOME}/library/grid/libs/grid.so
+        ${R_HOME}/library/methods/libs/methods.so
+        ${R_HOME}/library/parallel/libs/parallel.so
+        ${R_HOME}/library/splines/libs/splines.so
+        ${R_HOME}/library/stats/libs/stats.so
+        ${R_HOME}/library/tools/libs/tools.so
+        ${R_HOME}/library/utils/libs/utils.so
+        ${R_HOME}/library/cli/libs/cli.so
+        ${R_HOME}/library/rlang/libs/rlang.so
+    )
+    target_link_options(xr
+        PUBLIC "SHELL: --pre-js ../pre.js"
+        PUBLIC "SHELL: -g"
+        PUBLIC "SHELL: -fsanitize=undefined"
+        PUBLIC "SHELL: -s ERROR_ON_WASM_CHANGES_AFTER_LINK=1"
+    )
     xeus_r_set_kernel_options(xr)
     xeus_wasm_compile_options(xr)
     xeus_wasm_link_options(xr "web,worker")

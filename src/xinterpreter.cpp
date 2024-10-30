@@ -62,17 +62,21 @@ void capture_WriteConsoleEx(const char *buf, int buflen, int otype) {
 
 interpreter::interpreter(int argc, char* argv[])
 {
-    // When building with Emscripten, pass --no-readline to disable
-    // readline support, as r-base is not compiled with readline
-    // and will not read input from the command line.
-    #ifdef __EMSCRIPTEN__
-        const char* argvNew[] = {"--no-readline"};
-        Rf_initEmbeddedR(sizeof(argvNew) / sizeof(argvNew[0]), const_cast<char**>(argvNew));
-    #else
-        Rf_initEmbeddedR(argc, argv);
-    #endif
+    std::cout << "[xeus-r] Starting R interpreter" << std::endl;
+    std::cout << "[xeus-r] Init embeddedR" << std::endl;
+    char *argvNew[] = {
+        (char*)("R"),
+        (char*)("--no-readline"),
+        (char*)("--vanilla"),
+        (char*)("--c"),
+        (char*)("--gui=none")
+    };
+    Rf_initEmbeddedR(sizeof(argvNew)/sizeof(argvNew[0]), argvNew);
 
+    std::cout << "[xeus-r] register r routines" << std::endl;
     register_r_routines();
+    std::cout << "[xeus-r] Starting R interpreter" << std::endl;
+
 
 #ifndef _WIN32
     R_Outputfile = NULL;
@@ -80,9 +84,12 @@ interpreter::interpreter(int argc, char* argv[])
 
     ptr_R_WriteConsole = nullptr;
     ptr_R_WriteConsoleEx = WriteConsoleEx;
-#endif    
+#endif
 
+    std::cout << "[xeus-r] register interpreter" << std::endl;
     xeus::register_interpreter(this);
+
+    std::cout << "[xeus-r] get pointer" << std::endl;
     p_interpreter = this;
 }
 
@@ -138,24 +145,25 @@ void interpreter::execute_request_impl(
 
 void interpreter::configure_impl()
 {
+    std::cout << "[xeus-r] configure-impl" << std::endl;
     SEXP sym_Sys_which = Rf_install("Sys.which");
     SEXP sym_dirname = Rf_install("dirname");
     SEXP str_xr = Rf_mkString("xr");
     SEXP call_Sys_which = PROTECT(Rf_lang2(sym_Sys_which, str_xr));
     SEXP call = PROTECT(Rf_lang2(sym_dirname, call_Sys_which));
     SEXP dir_xr = Rf_eval(call, R_GlobalEnv);
-    
+
     std::stringstream ss;
     ss << CHAR(STRING_ELT(dir_xr, 0)) << "/../share/jupyter/kernels/xr/resources/setup.R";
     SEXP setup_R_code_path = PROTECT(Rf_mkString(ss.str().c_str()));
 
     SEXP sym_source = Rf_install("source");
     SEXP call_source = PROTECT(Rf_lang2(sym_source, setup_R_code_path));
-    
+
     Rf_eval(call_source, R_GlobalEnv);
-    
+
     r::invoke_xeusr_fn("configure");
-    
+
     UNPROTECT(4);
 }
 

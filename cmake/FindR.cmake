@@ -59,7 +59,7 @@ if(R_COMMAND)
 
     set(R_LDFLAGS "-L${CMAKE_PREFIX_PATH}/lib -L${CMAKE_PREFIX_PATH}/lib/R/lib -lRblas -lFortranRuntime -lpcre2-8 -llzma -lbz2 -lz -lrt -ldl -lm -liconv" CACHE STRING "Linker flags for R libraries in Emscripten")
 
-    set(R_LIBRARY_BASE "${R_HOME}/lib/libR.a" CACHE FILEPATH "R library (libR.a) in Emscripten")
+    set(R_LIBRARY_BASE "${R_HOME}/lib/libR.so" CACHE FILEPATH "R library (libR.a) in Emscripten")
 
     set(R_LIBRARY_BLAS "${R_HOME}/lib/libRblas.so" CACHE FILEPATH "Rblas library (libRblas.so) in Emscripten")
 

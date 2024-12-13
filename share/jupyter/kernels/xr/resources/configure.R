@@ -1,8 +1,8 @@
 get_null_device <- function() {
   os <- get_os()
   
-  ok_device     <- switch(os, win = png,   osx = pdf,  unix = png)
-  null_filename <- switch(os, win = 'NUL', osx = NULL, unix = '/dev/null')
+  ok_device     <- switch(os, win = png,   osx = pdf,  unix = png, wasm = pdf)
+  null_filename <- switch(os, win = 'NUL', osx = NULL, unix = '/dev/null', wasm = NULL)
   
   null_device <- function(filename = null_filename, ...) ok_device(filename, ...)
   null_device
@@ -28,11 +28,16 @@ init_options <- function() {
 }
 
 configure <- function() {
+  warning("Configuring xr kernel")
   pos <- which(search() == "tools:xeusr") 
+
+  warning("Configuring xr kernel here")
 
   attachNamespace("IRdisplay", pos = pos + 1)
   attachNamespace("glue", pos = pos + 1)
   attachNamespace("jsonlite", pos = pos + 1)
+
+  warning("Configuring xr kernel here")
   
   # setMethod(jsonlite:::asJSON, "shiny.tag", function(x, ...) {
   #   jsonlite:::asJSON(as.character(x), ...)

@@ -25,6 +25,7 @@
 #include "Rinternals.h"
 #include "Rembedded.h"
 #include "R_ext/Parse.h"
+#include "R_ext/Rdynload.h"
 
 #ifndef _WIN32
 #include "Rinterface.h"
@@ -65,22 +66,28 @@ interpreter::interpreter(int argc, char* argv[])
     // When building with Emscripten, pass --no-readline to disable
     // readline support, as r-base is not compiled with readline
     // and will not read input from the command line.
-    #ifdef __EMSCRIPTEN__
-        const char* argvNew[] = {"--no-readline"};
-        Rf_initEmbeddedR(sizeof(argvNew) / sizeof(argvNew[0]), const_cast<char**>(argvNew));
-    #else
-        Rf_initEmbeddedR(argc, argv);
-    #endif
+    // #ifdef __EMSCRIPTEN__
+    std::cout << ">>> OOOOOO Initializing embedded R with --no-readline" << std::endl;
+    char *argvNew[] = {
+        (char*)("R"),
+        (char*)("--no-readline"),
+        (char*)("--vanilla"),
+    };
+    Rf_initEmbeddedR(sizeof(argvNew) / sizeof(argvNew[0]), const_cast<char**>(argvNew));
+    // #else
+    //     std::cout << ">>> OOOOOO Initializing embedded R" << std::endl;
+    //     Rf_initEmbeddedR(argc, argv);
+    // #endif
 
     register_r_routines();
 
-#ifndef _WIN32
-    R_Outputfile = NULL;
-    R_Consolefile = NULL;
+// #ifndef _WIN32
+    R_Outputfile = stdout;
+    R_Consolefile = stdout;
 
     ptr_R_WriteConsole = nullptr;
     ptr_R_WriteConsoleEx = WriteConsoleEx;
-#endif    
+// #endif    
 
     xeus::register_interpreter(this);
     p_interpreter = this;
@@ -138,23 +145,35 @@ void interpreter::execute_request_impl(
 
 void interpreter::configure_impl()
 {
+    std::cout << ">>> Configuring R interpreter" << std::endl;
+
     SEXP sym_Sys_which = Rf_install("Sys.which");
     SEXP sym_dirname = Rf_install("dirname");
     SEXP str_xr = Rf_mkString("xr");
     SEXP call_Sys_which = PROTECT(Rf_lang2(sym_Sys_which, str_xr));
     SEXP call = PROTECT(Rf_lang2(sym_dirname, call_Sys_which));
     SEXP dir_xr = Rf_eval(call, R_GlobalEnv);
+
+    std::cout << ">>> Before ss" << std::endl;
     
     std::stringstream ss;
-    ss << CHAR(STRING_ELT(dir_xr, 0)) << "/../share/jupyter/kernels/xr/resources/setup.R";
+    ss << CHAR(STRING_ELT(dir_xr, 0)) << "/embed-env/share/jupyter/kernels/xr/resources/setup.R";
+    std::cout << ">>> ss: " << ss.str() << std::endl;
     SEXP setup_R_code_path = PROTECT(Rf_mkString(ss.str().c_str()));
 
+    std::cout << ">>> Before install source" << std::endl;
     SEXP sym_source = Rf_install("source");
+    std::cout << ">>> Before call source" << std::endl;
+   
     SEXP call_source = PROTECT(Rf_lang2(sym_source, setup_R_code_path));
-    
+
+    std::cout << ">>> Before eval source" << std::endl;
     Rf_eval(call_source, R_GlobalEnv);
     
+    std::cout << ">>> Before invoking configure" << std::endl;
     r::invoke_xeusr_fn("configure");
+
+    std::cout << ">>> All done" << std::endl;
     
     UNPROTECT(4);
 }

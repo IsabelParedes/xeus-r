@@ -204,6 +204,8 @@ macro(xeus_r_create_target target_name linkage output_name)
 
     target_compile_features(${target_name} PRIVATE cxx_std_17)
 
+    message(STATUS "🍅🍅🍅 XEUS_R_INCLUDE_DIR: ${XEUS_R_INCLUDE_DIR}")
+
     target_include_directories(${target_name}
                                PUBLIC
                                $<BUILD_INTERFACE:${XEUS_R_INCLUDE_DIR}>
@@ -265,7 +267,7 @@ endif ()
 # xr
 # =======
 if (XEUS_R_BUILD_EXECUTABLE)
-    find_package(xeus-zmq ${xeus_zmq_REQUIRED_VERSION} REQUIRED)
+    find_package(xeus-zmq 1.0.3 REQUIRED)
     add_executable(xr ${XEUS_R_MAIN_SRC})
     target_compile_features(xr PRIVATE cxx_std_17)
     xeus_r_set_common_options(xr)
@@ -273,11 +275,67 @@ if (XEUS_R_BUILD_EXECUTABLE)
     target_link_libraries(xr PRIVATE xeus xeus-zmq)
 endif()
 
+set(ZLIB_LIBRARY "/home/ihuicatl/Repos/Xeus/r-lite/host-env/lib/libz.a")
+set(ZLIB_INCLUDE_DIR "/home/ihuicatl/Repos/Xeus/r-lite/host-env/include")
+set(PNG_LIBRARY "/home/ihuicatl/Repos/Xeus/r-lite/host-env/lib/libpng16.a")
+set(PNG_PNG_INCLUDE_DIR "/home/ihuicatl/Repos/Xeus/r-lite/host-env/include")
+
 if(EMSCRIPTEN)
-    include(WasmBuildOptions)
+    include(WasmBuildLocalOptions)
     find_package(xeus-lite REQUIRED)
-    add_executable(xr src/main_emscripten_kernel.cpp )
-    target_link_libraries(xr PRIVATE xeus-lite)
+    # find_package(PkgConfig REQUIRED)
+    # pkg_check_modules(GLIB REQUIRED glib-2.0)
+    # pkg_check_modules(GIO REQUIRED gio-2.0)
+    # pkg_check_modules(PANGO REQUIRED pango)
+    # pkg_check_modules(PANGOCAIRO REQUIRED pangocairo)
+    # pkg_check_modules(PANGOFT2 REQUIRED pangoft2)
+    # pkg_check_modules(FONTCONFIG REQUIRED fontconfig)
+    # pkg_check_modules(HARFBUZZ REQUIRED harfbuzz)
+    # find_package(PNG REQUIRED)
+
+    add_executable(xr src/main_emscripten_kernel.cpp)
+    target_link_libraries(xr PRIVATE xeus-lite
+        ${R_HOME}/library/grDevices/libs/grDevices.so
+        ${R_HOME}/library/graphics/libs/graphics.so
+        ${R_HOME}/library/grid/libs/grid.so
+        ${R_HOME}/library/methods/libs/methods.so
+        ${R_HOME}/library/parallel/libs/parallel.so
+        ${R_HOME}/library/splines/libs/splines.so
+        ${R_HOME}/library/stats/libs/stats.so
+        ${R_HOME}/library/tools/libs/tools.so
+        ${R_HOME}/library/utils/libs/utils.so
+        ${R_HOME}/library/fastmap/libs/fastmap.so # External packages from here down
+        ${R_HOME}/library/digest/libs/digest.so
+        ${R_HOME}/library/lattice/libs/lattice.so
+        ${R_HOME}/library/magrittr/libs/magrittr.so
+        ${R_HOME}/library/MASS/libs/MASS.so
+        ${R_HOME}/library/isoband/libs/isoband.so
+        ${R_HOME}/library/utf8/libs/utf8.so
+        ${R_HOME}/library/fansi/libs/fansi.so
+        ${R_HOME}/library/base64enc/libs/base64enc.so
+        ${R_HOME}/library/farver/libs/farver.so
+        ${R_HOME}/library/colorspace/libs/colorspace.so
+        ${R_HOME}/library/cli/libs/cli.so
+        ${R_HOME}/library/glue/libs/glue.so
+        ${R_HOME}/library/jsonlite/libs/jsonlite.so
+        ${R_HOME}/library/rlang/libs/rlang.so
+        ${R_HOME}/library/nlme/libs/nlme.so
+        ${R_HOME}/library/Matrix/libs/Matrix.so
+        ${R_HOME}/library/ellipsis/libs/ellipsis.so
+        ${R_HOME}/library/mgcv/libs/mgcv.so
+        ${R_HOME}/library/htmltools/libs/htmltools.so
+        ${R_HOME}/library/vctrs/libs/vctrs.so
+        ${R_HOME}/library/tibble/libs/tibble.so
+    )
+
+    #  -lpng -ltiff -lglib-2.0 -lgobject-2.0 -lxml2 -lgio-2.0 -lffi -lpangocairo-1.0 -lfontconfig -lpangoft2-1.0 -lpango-1.0 -lharfbuzz" 
+    target_link_options(xr
+        PUBLIC "SHELL: --pre-js ../pre.js"
+        PUBLIC "SHELL: -g"
+        PUBLIC "SHELL: -fsanitize=undefined"
+        PUBLIC "SHELL: -s ERROR_ON_WASM_CHANGES_AFTER_LINK=1"
+        PUBLIC "SHELL: -s ERROR_ON_UNDEFINED_SYMBOLS=1"
+    )
     xeus_r_set_kernel_options(xr)
     xeus_wasm_compile_options(xr)
     xeus_wasm_link_options(xr "web,worker")

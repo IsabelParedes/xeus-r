@@ -1,3 +1,5 @@
+message("UUU call call call")
+
 .xeus_call <- function(fn, ...) {
     get(fn, envir = .xeus_env)(...)
 }

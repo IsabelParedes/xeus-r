@@ -36,7 +36,7 @@ function(xeus_wasm_link_options target environment)
         PUBLIC "SHELL: -s WASM=1"
         PUBLIC "SHELL: -s ENVIRONMENT=${environment}"
         PUBLIC "SHELL: -s STACK_SIZE=32mb"
-        PUBLIC "SHELL: -s INITIAL_MEMORY=128mb"
+        PUBLIC "SHELL: -s INITIAL_MEMORY=256mb"
         PUBLIC "SHELL: -s WASM_BIGINT"
         PUBLIC "SHELL: -s FORCE_FILESYSTEM"
         PUBLIC "SHELL: -s MAIN_MODULE=1"

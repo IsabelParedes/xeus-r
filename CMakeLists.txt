@@ -280,12 +280,13 @@ set(ZLIB_INCLUDE_DIR "/home/ihuicatl/Repos/Xeus/r-lite/host-env/include")
 set(PNG_LIBRARY "/home/ihuicatl/Repos/Xeus/r-lite/host-env/lib/libpng16.a")
 set(PNG_PNG_INCLUDE_DIR "/home/ihuicatl/Repos/Xeus/r-lite/host-env/include")
 
+
 if(EMSCRIPTEN)
     include(WasmBuildLocalOptions)
     find_package(xeus-lite REQUIRED)
-    # find_package(PkgConfig REQUIRED)
-    # pkg_check_modules(GLIB REQUIRED glib-2.0)
-    # pkg_check_modules(GIO REQUIRED gio-2.0)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+    pkg_check_modules(GIO REQUIRED gio-2.0)
     # pkg_check_modules(PANGO REQUIRED pango)
     # pkg_check_modules(PANGOCAIRO REQUIRED pangocairo)
     # pkg_check_modules(PANGOFT2 REQUIRED pangoft2)
@@ -293,8 +294,12 @@ if(EMSCRIPTEN)
     # pkg_check_modules(HARFBUZZ REQUIRED harfbuzz)
     # find_package(PNG REQUIRED)
 
+    pkg_check_modules(GIO REQUIRED gio-2.0)
+    set(GIO_LIBRARY "/home/ihuicatl/Repos/Xeus/r-lite/host-env/lib/libgio-2.0.a")
+
     add_executable(xr src/main_emscripten_kernel.cpp)
     target_link_libraries(xr PRIVATE xeus-lite
+        ${R_HOME}/library/grDevices/libs/cairo.so
         ${R_HOME}/library/grDevices/libs/grDevices.so
         ${R_HOME}/library/graphics/libs/graphics.so
         ${R_HOME}/library/grid/libs/grid.so
@@ -326,13 +331,14 @@ if(EMSCRIPTEN)
         ${R_HOME}/library/htmltools/libs/htmltools.so
         ${R_HOME}/library/vctrs/libs/vctrs.so
         ${R_HOME}/library/tibble/libs/tibble.so
+        # ${R_HOME}/library/dplyr/libs/dplyr.so
+        ${GIO_LIBRARY}
     )
 
     #  -lpng -ltiff -lglib-2.0 -lgobject-2.0 -lxml2 -lgio-2.0 -lffi -lpangocairo-1.0 -lfontconfig -lpangoft2-1.0 -lpango-1.0 -lharfbuzz" 
     target_link_options(xr
         PUBLIC "SHELL: --pre-js ../pre.js"
         PUBLIC "SHELL: -g"
-        PUBLIC "SHELL: -fsanitize=undefined"
         PUBLIC "SHELL: -s ERROR_ON_WASM_CHANGES_AFTER_LINK=1"
         PUBLIC "SHELL: -s ERROR_ON_UNDEFINED_SYMBOLS=1"
     )
